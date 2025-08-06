@@ -563,8 +563,6 @@ def rmsynthesis(params, options, manual=False):
     # initialize the RMSynth class that does all the work
     rms = R.RMSynth(params.nu, params.dnu, params.phi, params.weight)
     print("Done!")
-    lambda0 = rms.compute_l20()
-    print(f"lambda0 = {lambda0}")
 
     # Write out the RMSF to a text file
     rmsfout = numpy.zeros((len(rms.rmsf), 3))
