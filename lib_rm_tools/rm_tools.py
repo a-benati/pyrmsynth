@@ -208,8 +208,6 @@ class RMSynth:
             l20 += self.weights_nonuni[i] * \
                 self.l2_nonuni[i] / sum(self.weights_nonuni)
 
-        print(f"lambda0 = {l20}")
-
         return l20
 
     def compute_rmsf(self):
@@ -346,7 +344,8 @@ class RMClean:
         self.gain = gain
         self.cutoff = cutoff
 
-        self.fwhm_restoring_sf = self.gauss_fit()
+        self.fwhm_restoring_sf = self.gauss_fit_narrow()
+        print("La FWHM del restoring beam è: ", self.fwhm_restoring_sf)
 
         self.current_iter = 0
         self.cc_phi_list = list()
@@ -362,6 +361,7 @@ class RMClean:
         # Compute the CLEAN beam and convert to data space
         # Store for use with all LOS
         clean_beam = self.compute_clean_beam()
+        print("Il clean beam è: ", clean_beam)
         self.clean_beam_l2 = numpy.fft.ifft(numpy.fft.fftshift(clean_beam))
 
     def reset(self):
@@ -492,7 +492,29 @@ class RMClean:
 
         delta_l2 = self.synth.l2_nonuni[len(self.synth.l2_nonuni) - 1] -\
             self.synth.l2_nonuni[0]
+        print("Output of gauss_fit() = ", 2 * math.sqrt(3) / delta_l2)
         return 2 * math.sqrt(3) / delta_l2
+
+    def gauss_fit_narrow(self):
+        """
+        RMClean.gauss_fit()
+
+        Calculates the FWHM of the CLEAN beam based on the size of the main
+        peak of the RMSF.
+
+        Inputs:
+            None
+        Outputs:
+            1-  Returns the FWHM of the restoring spread function.
+        """
+        nu_min_UHF = 544e6
+        nu_max_UHF = 1088e6
+
+        lam2_min = convert_nu_to_l2(nu_max_UHF)
+        lam2_max = convert_nu_to_l2(nu_min_UHF)
+        fwhm_phi = 0.67 * (1.0 / lam2_min + 1.0 / lam2_max)
+        print("Output of gauss_fit_narrow() = ", fwhm_phi)
+        return fwhm_phi
 
     def perform_clean(self, pol=None):
         """
