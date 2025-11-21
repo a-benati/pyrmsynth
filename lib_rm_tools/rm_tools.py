@@ -510,8 +510,10 @@ class RMClean:
         nu_min_UHF = 544e6
         nu_max_UHF = 1088e6
 
-        lam2_min = convert_nu_to_l2(nu_max_UHF)
-        lam2_max = convert_nu_to_l2(nu_min_UHF)
+        # dnu = 0 per calcolare lambda^2 dai valori centrali
+        lam2_min = self.synth.convert_nu_to_l2(numpy.array([nu_max_UHF]), 0)[0]
+        lam2_max = self.synth.convert_nu_to_l2(numpy.array([nu_min_UHF]), 0)[0]
+
         fwhm_phi = 0.67 * (1.0 / lam2_min + 1.0 / lam2_max)
         print("Output of gauss_fit_narrow() = ", fwhm_phi)
         return fwhm_phi
