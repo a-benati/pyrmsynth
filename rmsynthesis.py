@@ -68,6 +68,7 @@ class Params:
         self.niter = 500
         self.gain = 0.1
         self.cutoff = 0.
+        self.narrow = False
         self.do_clean = False
         self.isl2 = False
         self.weight = None
@@ -116,6 +117,7 @@ class Params:
             print('    niter:           ', self.niter)
             print('    gain:            ', self.gain)
             print('    cutoff:          ', self.cutoff)
+            print('    narrow:          ', self.narrow)
         else:
             print('RM CLEAN not enabled')
         print('  Sky plane image limits:')
@@ -628,7 +630,7 @@ def rmsynthesis(params, options, manual=False):
     if params.do_clean:
         # initialize the CLEAN class once, reuse for each LOS
         # In doing so, the CLEAN beam convolution kernel is only computed once
-        rmc = R.RMClean(rms, params.niter, params.gain, params.cutoff)
+        rmc = R.RMClean(rms, params.niter, params.gain, params.cutoff, params.narrow)
 
     for indx in range(decsz[1] - decsz[0]):
         for jndx in range(rasz[1] - rasz[0]):
@@ -969,7 +971,7 @@ def generate_header(hdu, inhead, params):
         hdu.header.add_history('   RM Clean performed. niter=' +
                                str(params.niter) +
                                ', gain=' + str(params.gain) + ', cutoff=' +
-                               str(params.cutoff))
+                               str(params.cutoff) + ', narrow=' + str(params.narrow))
     else:
         hdu.header.add_history('   No RM Clean performed.')
     hdu.header.add_history('   See the accompanying _rmsf.txt for ' +
@@ -1020,6 +1022,7 @@ def parse_input_file(infile):
             parset[row[0]] = row[1]
 
     params.cutoff = float(parset['cutoff'])
+    params.narrow = bool(parset['narrow'])
     params.dec_lim = [int(parset['dec_min']), int(parset['dec_max'])]
     params.ra_lim = [int(parset['ra_min']), int(parset['ra_max'])]
 
