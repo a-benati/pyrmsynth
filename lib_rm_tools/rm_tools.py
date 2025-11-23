@@ -319,7 +319,7 @@ class RMClean:
     the final CLEAN map from the model components.
     """
 
-    def __init__(self, rms, niter=500, gain=0.1, cutoff=0.):
+    def __init__(self, rms, niter=500, gain=0.1, cutoff=0., narrow=False):
         """
         RMClean(rms, niter=100, gain=0.1, cutoff=0)
 
@@ -343,9 +343,10 @@ class RMClean:
         self.niter = niter
         self.gain = gain
         self.cutoff = cutoff
+        self.narrow = narrow
 
-        self.fwhm_restoring_sf = self.gauss_fit_narrow()
-        print("La FWHM del restoring beam è: ", self.fwhm_restoring_sf)
+        self.fwhm_restoring_sf = self.gauss_fit()
+        self.fwhm_restoring_sf_narrow = self.gauss_fit_narrow()
 
         self.current_iter = 0
         self.cc_phi_list = list()
@@ -361,7 +362,6 @@ class RMClean:
         # Compute the CLEAN beam and convert to data space
         # Store for use with all LOS
         clean_beam = self.compute_clean_beam()
-        print("Il clean beam è: ", clean_beam)
         self.clean_beam_l2 = numpy.fft.ifft(numpy.fft.fftshift(clean_beam))
 
     def reset(self):
@@ -391,8 +391,14 @@ class RMClean:
             A map of gaussian clean beam of length len with the peak of the
                 beam located at the central pixel.
         """
+        if self.narrow:
+            fwhm_restoring_sf = self.fwhm_restoring_sf_narrow
+        else:
+            fwhm_restoring_sf = self.fwhm_restoring_sf
 
-        self.sdev = self.fwhm_restoring_sf / 2. / math.sqrt(2. * math.log(2.))
+        print("The FWHM of the restoring spread function is:", fwhm_restoring_sf)
+
+        self.sdev = fwhm_restoring_sf / 2. / math.sqrt(2. * math.log(2.))
         cphi = 0    # central phi value
 
         #nphi = len(self.synth.phi)
@@ -492,7 +498,6 @@ class RMClean:
 
         delta_l2 = self.synth.l2_nonuni[len(self.synth.l2_nonuni) - 1] -\
             self.synth.l2_nonuni[0]
-        print("Output of gauss_fit() = ", 2 * math.sqrt(3) / delta_l2)
         return 2 * math.sqrt(3) / delta_l2
 
     def gauss_fit_narrow(self):
@@ -505,17 +510,13 @@ class RMClean:
         Inputs:
             None
         Outputs:
-            1-  Returns the FWHM of the restoring spread function.
+            1-  Returns the FWHM of the narrow restoring spread function.
         """
-        nu_min_UHF = 544e6
-        nu_max_UHF = 1088e6
 
-        # dnu = 0 per calcolare lambda^2 dai valori centrali
-        lam2_min = self.synth.convert_nu_to_l2(numpy.array([nu_max_UHF]), 0)[0]
-        lam2_max = self.synth.convert_nu_to_l2(numpy.array([nu_min_UHF]), 0)[0]
+        lam2_min = self.synth.l2_nonuni[0]
+        lam2_max = self.synth.l2_nonuni[-1]
 
         fwhm_phi = 0.67 * (1.0 / lam2_min + 1.0 / lam2_max)
-        print("Output of gauss_fit_narrow() = ", fwhm_phi)
         return fwhm_phi
 
     def perform_clean(self, pol=None):
