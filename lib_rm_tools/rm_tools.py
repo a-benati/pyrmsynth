@@ -207,7 +207,7 @@ class RMSynth:
         for i in range(len(self.l2_nonuni)):
             l20 += self.weights_nonuni[i] * \
                 self.l2_nonuni[i] / sum(self.weights_nonuni)
-
+        print(f"lambda0 squared = {l20}")
         return l20
 
     def compute_rmsf(self):
